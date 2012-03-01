@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />  
+    <script src="/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+    <script src="/js/assignment2.js" type="text/javascript"></script>
+	</script>
+  </head>
+  <body>
+		<div id="box">
+			<h2>Intelligent web applications - Assignment 2</h2>
+			<h3>By group 18 (<a href='mailto:kasperbrandt87@gmail.com'>Kasper Brandt</a> and <a href='mailto:guillelmo@gmail.com'>Guillermo Soberon</a>)</h3>
+			<h4>Fill in a SPARQL query below:</h4>
+			<div id="form">
+				<form action="">
+					<div>
+						<textarea id="query" name="content" rows="20" cols="50"></textarea>
+					</div>
+					<div>
+						<input type="button" value="Submit" onclick = "getEventData(query.value)">
+					</div>
+				</form>
+			</div>
+		</div>
+		<div id="result"></div>
+  </body>
+</html>
