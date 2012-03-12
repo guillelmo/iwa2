@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />  
+    <script src="/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+    <script src="/js/assignment2.js" type="text/javascript"></script>
+	</script>
+  </head>
+  <body>
+		<div id="box">
+		  <table><tr>
+	       {% for val in values %}
+	           <td><b>{{val}}</b></td>
+	       {% endfor %}</tr>
+               {% for p in res %}
+		  <tr><td>{{p.url}}</td><td>
+		  {{p.venue}}</td></tr>
+   	{% endfor%}
+		  </table>
+		</div>
+		<div id="result"></div>
+  </body>
+</html>
+
+
