@@ -13,6 +13,7 @@ from google.appengine.api import users
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.api import urlfetch
+from google.appengine.dist import use_library
 
 from xml.etree import ElementTree as etree
 
@@ -26,17 +27,6 @@ rdfStoreUrl = 'http://ct.filmaffinity.com:26080/openrdf-sesame/'
 class MainPage(webapp.RequestHandler):
     
     def get(self):
-        # query = "PREFIX ns1:<http://iwa2012-18-2.appspot.com/#>select ?venue $url where {?x  ns1:hasVenueName ?venue . ?y ns1:hasUrl ?url}"
-
-        # res = queryRdfStore(query)
-        
-        # print type(res)
-        # for elem in res:
-        #     print elem         
-
-            
-        # #self.response.out.write(res)
-        # return
         template_values = {
         }
 
@@ -45,16 +35,10 @@ class MainPage(webapp.RequestHandler):
 
     def post(self):
         query = self.request.get("content")
-        nrOfResults = self.request.get("amount")
-
-        try:
-            number = int(nrOfResults)
-        except ValueError:
-            number = 0
 
         literals = re.findall(r'"(.+?)"',query)
 
-        urls = processLiterals(literals, number)
+        urls = processLiterals(literals)
 
         graph = ConjunctiveGraph()
 
@@ -82,50 +66,67 @@ class MainPage(webapp.RequestHandler):
                     graph.add((venuens[id], iwa['hasVenueName'], Literal(venuename.text)))
                     graph.add((venuens[id], iwa['hasUrl'], Literal(venueurl.text)))
                     graph.add((idns[id], iwa['atVenue'], venuens[id]))
-                    
-                storeRDF(graph)            
-                #print res
 
+                # self.response.out.write("mygraph")   
+                # self.response.out.write(graph)
+                storeRDF(graph)
+                
+                #if(int(res) != 200):
+                #self.response.out.write("Something went wrong storing the RDF:  "+str(res))
+                #   return
                 
             else:
                 print "Something went wrong with the connection to the Eventful server. Status code: " + xml.status_code
-
-        #print query
+        
         res = queryRdfStore(query)
-        #print "pres"
+
         if(type(res) is list):
-            #print "res_:"
-            
+
+            if(len(res) == 0):
+                self.response.out.write("Empty")
+                return 
+
+            mList = []
+            for row in res:
+
+                aux = []
+                for key,value in row.iteritems():
+                    aux.append(value)
+
+                row_tuple = tuple(aux)
+                mList.append(row_tuple)
+
+            template_values = {'res':mList, 'values': res[1].keys(), 'numVariables': len(res[1].keys())}        
+
             path = os.path.join(os.path.dirname(__file__), "results.html")
-            template_values = {'res':res, 'values': res[1].keys()}
+            #self.response.out.write(mList)
             self.response.out.write(template.render(path, template_values))
-            #print "end"
         else:
-            print "error: " + res['error']
-
-
-        # if(res):
-        #     print res
-        #     # for elem in res:
-        #     #     print elem
-        # else:
-        #     print "not found"
+            print "error: "
+            print res
 
 
 def storeRDF(graph):
                     
-    data=graph.serialize(format='xml')            
+    data=graph.serialize(format='xml')    
     url = rdfStoreUrl + "repositories/iwa/statements"
-    
-    headers={ 'content-type': 'application/rdf+xml' }
-    req = urllib2.Request(url,data, headers)
 
-    response = urllib2.urlopen(req)
+    # headers={ 'content-type': 'application/rdf+xml'}    
+    # req = urllib2.Request(url,data, headers)
+    
+    # response = urllib2.urlopen(req)
+    
+    jsonresult = urlfetch.fetch(url,payload=data,deadline=30,method=urlfetch.POST, headers={ 'content-type': 'application/rdf+xml'})
+    #return jsonresult.code
+    #return url
+    #return response.code
+        
 
 def queryRdfStore(query):
 
     url = rdfStoreUrl + "repositories/iwa?" + urllib.urlencode({"query" : query})
-    jsonresult = urlfetch.fetch(url,deadline=60,method=urlfetch.GET, headers={"accept" : "application/sparql-results+json"})
+
+    jsonresult = urlfetch.fetch(url,deadline=30,method=urlfetch.GET, headers={"accept" : "application/sparql-results+json"})
 
     if(jsonresult.status_code == 200):
         res = json.loads(jsonresult.content)
@@ -147,12 +148,13 @@ def queryRdfStore(query):
 def create_callback(rpc):
     return lambda: handle_result(rpc)
 
-def processLiterals(list, number):
-    if number > 0:
-        numberstr = str(number)
-        baseurl = "http://api.eventful.com/rest/events/search?app_key=fZbWS6qHrqnNvPW7&page_size=" + numberstr + "&keywords="
-    else:
-        baseurl = "http://api.eventful.com/rest/events/search?app_key=fZbWS6qHrqnNvPW7&keywords="
+def processLiterals(list):
+
+    # if number > 0:
+    #     numberstr = str(number)
+    #     baseurl = "http://api.eventful.com/rest/events/search?app_key=fZbWS6qHrqnNvPW7&page_size=" + numberstr + "&keywords="
+    # else:
+    baseurl = "http://api.eventful.com/rest/events/search?app_key=fZbWS6qHrqnNvPW7&keywords="
 
     urls = []
     i=0
@@ -167,6 +169,7 @@ def processLiterals(list, number):
 application = webapp.WSGIApplication([('/', MainPage)], debug=True)
 
 def main():
+
     run_wsgi_app(application)
 
 if __name__ == "__main__":

@@ -7,14 +7,22 @@
   </head>
   <body>
 		<div id="box">
-		  <table><tr>
-	       {% for val in values %}
-	           <td><b>{{val}}</b></td>
-	       {% endfor %}</tr>
-               {% for p in res %}
-		  <tr><td>{{p.url}}</td><td>
-		  {{p.venue}}</td></tr>
-   	{% endfor%}
+		  <table>
+		    <tr>
+		      {% for label in values %}
+		      <td>{{label}}</td>
+		      {% endfor%}
+		    </tr>
+		    
+		    {% for tup in res %}
+		    <tr> 
+		    {% for elem1 in tup %}
+		      <td>{{elem1}}</td>
+		    {% endfor %}
+		    </tr>
+		    {% endfor %}		    
+		    
+	              <!-- <td></td><td><b>{{val}}</b></td>-->
 		  </table>
 		</div>
 		<div id="result"></div>
